@@ -84,3 +84,14 @@ def real_loss(
     loss = criterion(D_out.squeeze(), torch.ones(batch_size)*p)
 
     return loss
+
+def fake_loss(
+    G_out
+    ):
+    batch_size = G_out.shape[0]
+
+    criterion = nn.BCEWithLogitsLoss()
+
+    loss = criterion(G_out.squeeze(), torch.zeros(batch_size))
+
+    return loss
