@@ -26,7 +26,7 @@ class Discriminator(nn.Module):
         self, 
         x
         ):
-        # flatten imaga
+        # flatten image
         x = x.view(-1, self.input_size)
         # pass x through all layers
         x = self.fc1(x)
@@ -69,3 +69,18 @@ class Generator(nn.Module):
 
         return x
 
+def real_loss(
+    D_out, 
+    smooth = False
+    ):
+    batch_size = D_out.shape[0]
+    if smooth:
+        p = 0.9
+    else:
+        p = 1.0
+
+    criterion = nn.BCEWithLogitsLoss()
+
+    loss = criterion(D_out.squeeze(), torch.ones(batch_size)*p)
+
+    return loss
