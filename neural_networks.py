@@ -131,6 +131,9 @@ def train(
     d_optimizer = optim.Adam(D.parameters(), lr = lr)
     g_optimizer = optim.Adam(G.parameters(), lr = lr)
 
+    d_losses = []
+    g_losses = []
+
     rng = np.random.default_rng(random_seed)
 
     for e in range(n_epochs):
@@ -147,11 +150,13 @@ def train(
             outputs = D(G(z))
             f_loss = fake_loss(outputs)
 
-            g_loss = r_loss + f_loss
+            d_loss = r_loss + f_loss
 
             d_optimizer.zero_grad()
-            g_loss.backward()
+            d_loss.backward()
             d_optimizer.step()
+
+            d_losses.append(d_loss.item())
 
             z = rng.uniform(0, 1, (batch_size, G.input_size))
             z = torch.from_numpy(z)
@@ -162,3 +167,7 @@ def train(
             g_optimizer.zero_grad()
             g_loss.backward()
             g_optimizer.step()
+
+            g_losses.append(g_loss.item())
+
+    return D, G
