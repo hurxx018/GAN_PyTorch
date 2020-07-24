@@ -144,7 +144,7 @@ def train(
 
             z = rng.uniform(0, 1, (batch_size, G.input_size))
             z = torch.from_numpy(z)
-            outputs = G(z)
+            outputs = D(G(z))
             f_loss = fake_loss(outputs)
 
             g_loss = r_loss + f_loss
