@@ -139,7 +139,7 @@ def train(
             batch_size = len(inputs)
 
             outputs = D(inputs)
-            r_loss = real_loss(outputs)
+            r_loss = real_loss(outputs, True)
 
 
             z = rng.uniform(0, 1, (batch_size, G.input_size))
@@ -152,3 +152,13 @@ def train(
             d_optimizer.zero_grad()
             g_loss.backward()
             d_optimizer.step()
+
+            z = rng.uniform(0, 1, (batch_size, G.input_size))
+            z = torch.from_numpy(z)
+
+            outputs = D(G(z))
+            g_loss = real_loss(outputs, False)
+
+            g_optimizer.zero_grad()
+            g_loss.backward()
+            g_optimizer.step()
