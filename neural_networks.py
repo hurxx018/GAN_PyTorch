@@ -73,6 +73,16 @@ def real_loss(
     D_out, 
     smooth = False
     ):
+    """ Loss for real data
+        Arguments
+        ---------
+        D_out : outputs of Discriminator for real data
+        smooth : label-smoothing
+
+        Returns
+        -------
+        loss
+    """
     batch_size = D_out.shape[0]
     if smooth:
         p = 0.9
@@ -86,12 +96,21 @@ def real_loss(
     return loss
 
 def fake_loss(
-    G_out
+    D_out
     ):
-    batch_size = G_out.shape[0]
+    """ Loss for fake data from Generator
+        Arguments
+        ---------
+        D_out : outputs of Discriminator for fake data
+
+        Returns
+        -------
+        loss
+    """
+    batch_size = D_out.shape[0]
 
     criterion = nn.BCEWithLogitsLoss()
 
-    loss = criterion(G_out.squeeze(), torch.zeros(batch_size))
+    loss = criterion(D_out.squeeze(), torch.zeros(batch_size))
 
     return loss
