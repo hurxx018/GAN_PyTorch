@@ -1,3 +1,6 @@
+
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -114,3 +117,38 @@ def fake_loss(
     loss = criterion(D_out.squeeze(), torch.zeros(batch_size))
 
     return loss
+
+
+def train(
+    train_loader,
+    D,
+    G,
+    n_epochs = 10,
+    lr = 0.001,
+    random_seed = None
+    ):
+
+    d_optimizer = optim.Adam(D.parameters(), lr = lr)
+    g_optimizer = optim.Adam(G.parameters(), lr = lr)
+
+    rng = np.random.default_rng(random_seed)
+
+    for e in range(n_epochs):
+
+        for inputs, _ in train_loader:
+            batch_size = len(inputs)
+
+            outputs = D(inputs)
+            r_loss = real_loss(outputs)
+
+
+            z = rng.uniform(0, 1, (batch_size, G.input_size))
+            z = torch.from_numpy(z)
+            outputs = G(z)
+            f_loss = fake_loss(outputs)
+
+            g_loss = r_loss + f_loss
+
+            d_optimizer.zero_grad()
+            g_loss.backward()
+            d_optimizer.step()
