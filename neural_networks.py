@@ -221,6 +221,14 @@ def train(
             samples.append(samples_z)
         G.train()
 
+    # Save training losses
+    with open('g_losses.pkl', 'wb') as f:
+        pkl.dump(g_losses, f)
+
+    with open('d_losses.pkl', 'wb') as f:
+        pkl.dump(d_losses, f)
+
+
     # Save training generator samples
     with open('train_samples.pkl', 'wb') as f:
         pkl.dump(samples, f)
