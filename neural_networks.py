@@ -23,17 +23,18 @@ class Discriminator(nn.Module):
         self.fc1 = nn.Linear(input_size, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, output_size)
 
-        self.leakyrelu = nn.LeakyReLU(0.1)
+        self.leaky_relu = nn.LeakyReLU(0.1)
+        self.dropout = nn.Dropout(0.2)
 
     def forward(
         self, 
         x
         ):
         # flatten image
-        x = x.view(-1, self.input_size)
+        x = x.view(-1, self._input_size)
         # pass x through all layers
         x = self.fc1(x)
-        x = self.leakyrelu(x)
+        x = self.leaky_relu(x)
         x = self.fc2(x)
 
         return x
@@ -56,8 +57,9 @@ class Generator(nn.Module):
         self.fc1 = nn.Linear(input_size, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, output_size)
 
-        self.leakyrelu = nn.LeakyReLU(0.1)
+        self.leaky_relu = nn.LeakyReLU(0.1)
         self.tanh = nn.Tanh()
+        self.dropout = nn.Dropout(0.2)
 
     def forward(
         self, 
@@ -65,12 +67,13 @@ class Generator(nn.Module):
         ):
         # pass x through all layers
         x = self.fc1(x)
-        x = self.leakyrelu(x)
+        x = self.leaky_relu(x)
         x = self.fc2(x)
         # final layer should have tanh applied
         x = self.tanh(x)
 
         return x
+
 
 def real_loss(
     D_out, 
@@ -125,9 +128,13 @@ def train(
     G,
     n_epochs = 10,
     lr = 0.001,
-    random_seed = None
+    print_every = 400,
+    sample_size = 16,
+    random_seed = None,
+    train_on_gpu = None
     ):
-
+    if train_on_gpu:
+        D, G = D.cuda(), G.cuda()
     d_optimizer = optim.Adam(D.parameters(), lr = lr)
     g_optimizer = optim.Adam(G.parameters(), lr = lr)
 
@@ -136,18 +143,37 @@ def train(
 
     rng = np.random.default_rng(random_seed)
 
+    fixed_z = rng.uniform(-1, 1, size=(sample_size, G.input_size))
+    fixed_z = torch.from_numpy(fixed_z).float()
+
+    if train_on_gpu:
+        fixed_z = fixed_z.cuda()
+
+    D.train()
+    G.train()
     for e in range(n_epochs):
 
-        for inputs, _ in train_loader:
-            batch_size = len(inputs)
+        for i_batch, (real_images, _) in enumerate(train_loader):
+            batch_size = len(real_images)
 
-            outputs = D(inputs)
+            if train_on_gpu:
+                real_images = real_images.cuda()
+
+            # Important rescaling step
+            real_images = real_images*2 - 1
+
+            # Train the Discriminator
+
+            outputs = D(real_images)
             r_loss = real_loss(outputs, True)
 
 
             z = rng.uniform(0, 1, (batch_size, G.input_size))
-            z = torch.from_numpy(z)
-            outputs = D(G(z))
+            z = torch.from_numpy(z).float()
+            if train_on_gpu:
+                z = z.cuda()
+            fake_images = G(z)
+            outputs = D(fake_images)
             f_loss = fake_loss(outputs)
 
             d_loss = r_loss + f_loss
