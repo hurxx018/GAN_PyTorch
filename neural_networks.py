@@ -1,3 +1,4 @@
+import pickle
 
 import numpy as np
 
@@ -135,9 +136,11 @@ def train(
     ):
     if train_on_gpu:
         D, G = D.cuda(), G.cuda()
+
     d_optimizer = optim.Adam(D.parameters(), lr = lr)
     g_optimizer = optim.Adam(G.parameters(), lr = lr)
 
+    samples  = []
     d_losses = []
     g_losses = []
 
@@ -174,6 +177,8 @@ def train(
                 z = z.cuda()
             fake_images = G(z)
             outputs = D(fake_images)
+
+            # compute the discriminator losses on fake images
             f_loss = fake_loss(outputs)
 
             d_loss = r_loss + f_loss
@@ -184,10 +189,14 @@ def train(
 
             d_losses.append(d_loss.item())
 
-            z = rng.uniform(0, 1, (batch_size, G.input_size))
-            z = torch.from_numpy(z)
+            # Train the Generator
 
-            outputs = D(G(z))
+            z = rng.uniform(0, 1, (batch_size, G.input_size))
+            z = torch.from_numpy(z).float()
+            if train_on_gpu:
+                z = z.cuda()
+            fake_images = G(z)
+            outputs = D(fake_images)
             g_loss = real_loss(outputs, False)
 
             g_optimizer.zero_grad()
@@ -195,5 +204,25 @@ def train(
             g_optimizer.step()
 
             g_losses.append(g_loss.item())
+
+            # Print some loss stats
+            if i_batch % print_every == 0:
+                # print discriminator and generator loss
+                print('Epoch [{:5d}/{:5d}] | d_loss: {:6.4f} | g_loss: {:6.4f}'.format(
+                    epoch+1, num_epochs, d_loss.item(), g_loss.item()))
+
+        # AFTER each epoch
+        # generate and save sampled fake images
+        G.eval()
+        with torch.no_grad():
+            samples_z = G(fixed_z)
+            if train_on_gpu:
+                samples_z = samples_z.cpu()
+            samples.append(samples_z)
+        G.train()
+
+    # Save training generator samples
+    with open('train_samples.pkl', 'wb') as f:
+        pkl.dump(samples, f)
 
     return D, G
