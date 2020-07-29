@@ -1,4 +1,4 @@
-import pickle
+import pickle as pkl
 
 import numpy as np
 
@@ -32,7 +32,7 @@ class Discriminator(nn.Module):
         x
         ):
         # flatten image
-        x = x.view(-1, self._input_size)
+        x = x.view(-1, self.input_size)
         # pass x through all layers
         x = self.fc1(x)
         x = self.leaky_relu(x)
@@ -78,7 +78,8 @@ class Generator(nn.Module):
 
 def real_loss(
     D_out, 
-    smooth = False
+    smooth = False,
+    train_on_gpu = False
     ):
     """ Loss for real data
         Arguments
@@ -97,13 +98,16 @@ def real_loss(
         p = 1.0
 
     criterion = nn.BCEWithLogitsLoss()
-
-    loss = criterion(D_out.squeeze(), torch.ones(batch_size)*p)
+    targets = torch.ones(batch_size)*p
+    if train_on_gpu:
+        targets = targets.cuda()
+    loss = criterion(D_out.squeeze(), targets)
 
     return loss
 
 def fake_loss(
-    D_out
+    D_out,
+    train_on_gpu = False
     ):
     """ Loss for fake data from Generator
         Arguments
@@ -117,8 +121,11 @@ def fake_loss(
     batch_size = D_out.shape[0]
 
     criterion = nn.BCEWithLogitsLoss()
+    targets = torch.zeros(batch_size)
+    if train_on_gpu:
+        targets = targets.cuda()
 
-    loss = criterion(D_out.squeeze(), torch.zeros(batch_size))
+    loss = criterion(D_out.squeeze(), targets)
 
     return loss
 
@@ -154,7 +161,7 @@ def train(
 
     D.train()
     G.train()
-    for e in range(n_epochs):
+    for epoch in range(n_epochs):
 
         for i_batch, (real_images, _) in enumerate(train_loader):
             batch_size = len(real_images)
@@ -168,10 +175,12 @@ def train(
             # Train the Discriminator
 
             outputs = D(real_images)
-            r_loss = real_loss(outputs, True)
+            if train_on_gpu:
+                outputs = outputs.cuda()
+            r_loss = real_loss(outputs, True, train_on_gpu)
 
 
-            z = rng.uniform(0, 1, (batch_size, G.input_size))
+            z = rng.uniform(-1, 1, (batch_size, G.input_size))
             z = torch.from_numpy(z).float()
             if train_on_gpu:
                 z = z.cuda()
@@ -179,7 +188,7 @@ def train(
             outputs = D(fake_images)
 
             # compute the discriminator losses on fake images
-            f_loss = fake_loss(outputs)
+            f_loss = fake_loss(outputs, train_on_gpu)
 
             d_loss = r_loss + f_loss
 
@@ -191,13 +200,13 @@ def train(
 
             # Train the Generator
 
-            z = rng.uniform(0, 1, (batch_size, G.input_size))
+            z = rng.uniform(-1, 1, (batch_size, G.input_size))
             z = torch.from_numpy(z).float()
             if train_on_gpu:
                 z = z.cuda()
             fake_images = G(z)
             outputs = D(fake_images)
-            g_loss = real_loss(outputs, False)
+            g_loss = real_loss(outputs, False, train_on_gpu)
 
             g_optimizer.zero_grad()
             g_loss.backward()
@@ -209,7 +218,7 @@ def train(
             if i_batch % print_every == 0:
                 # print discriminator and generator loss
                 print('Epoch [{:5d}/{:5d}] | d_loss: {:6.4f} | g_loss: {:6.4f}'.format(
-                    epoch+1, num_epochs, d_loss.item(), g_loss.item()))
+                    epoch + 1, n_epochs, d_loss.item(), g_loss.item()))
 
         # AFTER each epoch
         # generate and save sampled fake images
@@ -222,11 +231,13 @@ def train(
         G.train()
 
     # Save training losses
-    with open('g_losses.pkl', 'wb') as f:
-        pkl.dump(g_losses, f)
+    np.save("g_losses", np.asarray(g_losses))
+    np.save("d_losses", np.asarray(d_losses))
+    # with open('g_losses.pkl', 'wb') as f:
+    #     pkl.dump(np.asarray(g_losses), f)
 
-    with open('d_losses.pkl', 'wb') as f:
-        pkl.dump(d_losses, f)
+    # with open('d_losses.pkl', 'wb') as f:
+    #     pkl.dump(np.asarray(d_losses), f)
 
 
     # Save training generator samples
