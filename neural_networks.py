@@ -196,8 +196,6 @@ def train(
             d_loss.backward()
             d_optimizer.step()
 
-            d_losses.append(d_loss.item())
-
             # Train the Generator
 
             z = rng.uniform(-1, 1, (batch_size, G.input_size))
@@ -212,8 +210,6 @@ def train(
             g_loss.backward()
             g_optimizer.step()
 
-            g_losses.append(g_loss.item())
-
             # Print some loss stats
             if i_batch % print_every == 0:
                 # print discriminator and generator loss
@@ -221,6 +217,8 @@ def train(
                     epoch + 1, n_epochs, d_loss.item(), g_loss.item()))
 
         # AFTER each epoch
+        d_losses.append(d_loss.item())
+        g_losses.append(g_loss.item())
         # generate and save sampled fake images
         G.eval()
         with torch.no_grad():
@@ -233,12 +231,6 @@ def train(
     # Save training losses
     np.save("g_losses", np.asarray(g_losses))
     np.save("d_losses", np.asarray(d_losses))
-    # with open('g_losses.pkl', 'wb') as f:
-    #     pkl.dump(np.asarray(g_losses), f)
-
-    # with open('d_losses.pkl', 'wb') as f:
-    #     pkl.dump(np.asarray(d_losses), f)
-
 
     # Save training generator samples
     with open('train_samples.pkl', 'wb') as f:
