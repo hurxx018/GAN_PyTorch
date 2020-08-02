@@ -6,14 +6,15 @@ import torch.optim as optim
 class Discriminator(nn.Module):
 
     def __init__(
-        self
+        self,
+        conv_dim = 32
         ):
-        super().__init__(
-            conv_dim = 32
-        )
+        super().__init__()
 
+        # Store parameters.
         self.conv_dim = conv_dim
 
+        # Conv2D layers
         self.conv1 = nn.Conv2d(3, self.conv_dim, 4, 2, 1, bias=False)
         self.conv2 = nn.Conv2d(self.conv_dim, self.conv_dim*2, 4, 2, 1, bias=False)
         self.conv3 = nn.Conv2d(self.conv_dim*2, self.conv_dim*4, 4, 2, 1, bias=False)
@@ -25,6 +26,7 @@ class Discriminator(nn.Module):
         self.batch2 = nn.BatchNorm2d(self.conv_dim*2)
         self.batch3 = nn.BatchNorm2d(self.conv_dim*4)
 
+        # Fully-connected layer for the last layer
         self.fc_out = nn.Linear(4*4*self.conv_dim*4, 1)
 
     def forward(
