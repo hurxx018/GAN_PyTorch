@@ -23,3 +23,28 @@ def conv(
         layers.append(nn.BatchNorm2d(out_channels))
     return nn.Sequential(*layers)
 
+
+class Discriminator(nn.Module):
+
+    def __init__(
+        self, 
+        input_in_channels = 3, 
+        conv_dim = 64
+        ):
+        super(Discriminator, self).__init__()
+
+        self.conv1 = conv(self.input_in_channels, self.conv_dim*1, 4, 2, 2, batch_norm=False)
+        self.conv2 = conv(self.conv_dim*1, self.conv_dim*2, 4, 2, 2, batch_norm = True)
+        self.conv3 = conv(self.conv_dim*2, self.conv_dim*4, 4, 2, 2, batch_norm = True)
+        self.conv4 = conv(self.conv_dim*4, self.conv_dim*8, 4, 2, 2, batch_norm = True)
+        self.conv5 = conv(self.conv_dim*8, 1, batch_norm = False)
+
+        nn.relu = nn.ReLU()
+
+    def forward(
+        self, 
+        x
+        ):
+
+
+        return out
