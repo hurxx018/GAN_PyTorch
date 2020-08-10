@@ -79,13 +79,21 @@ class ResidualBlock(nn.Module):
         conv_dim
         ):
         super(ResidualBlock, self).__init__()
+        self.conv_dim = conv_dim
+        
+        self.conv1 = conv(self.conv_dim, self.conv_dim, 3, 1, 1, batch_norm= True)
+        self.conv2 = conv(self.conv_dim, self.conv_dim, 3, 1, 1, batch_norm= True)
+        self.relu = nn.ReLU()
 
     def forward(
-        self
+        self,
+        x
         ):
-        pass
+        y = self.conv1(x)
+        y = self.relu(y)
+        y = self.conv2(y)
 
-
+        return y + x
 
 def get_data_loader(
     image_type,
