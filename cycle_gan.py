@@ -71,10 +71,19 @@ class Discriminator(nn.Module):
         return out
 
 
+class ResidualBlock(nn.Module):
 
 
+    def __init__(
+        self,
+        conv_dim
+        ):
+        super(ResidualBlock, self).__init__()
 
-
+    def forward(
+        self
+        ):
+        pass
 
 
 
