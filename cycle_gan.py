@@ -133,6 +133,7 @@ class CycleGenerator(nn.Module):
     """
     def __init__(
         self,
+        input_in_channels = 3,
         conv_dim = 64,
         n_res_blocks = 6
         ):
@@ -145,12 +146,13 @@ class CycleGenerator(nn.Module):
                 Number of residual blocks in the generator
         """
         super(CycleGenerator, self).__init__()
+        self.input_in_channels = input_in_channels
         self.conv_dim = conv_dim
         self.n_res_blocks = n_res_blocks
 
         # Define the encoder part of the generator
         self.encode = nn.Sequential(
-            conv(3, self.conv_dim, 4, 2, 1, batch_norm = True),
+            conv(self.input_in_channels, self.conv_dim, 4, 2, 1, batch_norm = True),
             nn.ReLU(),
             conv(self.conv_dim, self.conv_dim*2, 4, 2, 1, batch_norm = True),
             nn.ReLU(),
@@ -236,3 +238,70 @@ def scale(
     min, max = feature_range
     x = x * (max - min) + min
     return x    
+
+
+def create_model(
+    input_in_channels = 3,
+    generator_conv_dim = 64,
+    discriminator_conv_dim = 64,
+    n_res_blocks = 6
+    ):
+    """ Instantiate two generators and two discriminator for Cycle GAN
+    
+        Arguments:
+        input_in_channels : int
+            Number of channels in input
+        generator_conv_dim : int
+            Size of output channels of the first conv-layer of the Generator
+        discriminator_conv_dim : int
+            Size of output channels of the first conv-layer of the Discriminator
+
+        Returns
+        -------
+        G_XtoY, G_YtoX, D_X, D_Y
+    """
+    # Instantiate Generators
+    G_XtoY = CycleGenerator(input_in_channels, generator_conv_dim, n_res_blocks)
+    G_YtoX = CycleGenerator(input_in_channels, generator_conv_dim, n_res_blocks)
+
+    # Instantiate Discriminators
+    D_X = Discriminator(input_in_channels, discriminator_conv_dim)
+    D_Y = Discriminator(input_in_channels, discriminator_conv_dim)
+
+    # move models to GPU, if available
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+        G_XtoY.to(device)
+        G_YtoX.to(device)
+        D_X.to(device)
+        D_Y.to(device)
+        print('Models moved to GPU.')
+    else:
+        print('Only CPU available.')
+
+    return G_XtoY, G_YtoX, D_X, D_Y
+
+
+# helper function for printing the model architecture
+def print_models(G_XtoY, G_YtoX, D_X, D_Y):
+    """Prints model information for the generators and discriminators.
+    """
+    print("                     G_XtoY                    ")
+    print("-----------------------------------------------")
+    print(G_XtoY)
+    print()
+
+    print("                     G_YtoX                    ")
+    print("-----------------------------------------------")
+    print(G_YtoX)
+    print()
+
+    print("                      D_X                      ")
+    print("-----------------------------------------------")
+    print(D_X)
+    print()
+
+    print("                      D_Y                      ")
+    print("-----------------------------------------------")
+    print(D_Y)
+    print()
