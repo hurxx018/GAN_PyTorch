@@ -115,9 +115,24 @@ def deconv(
     return nn.Sequential(*layers)
 
 
-class Generator(nn.Module):
-    def __init__(self):
-        super(Generator, self).__init__()
+class CycleGenerator(nn.Module):
+    """ Generator for Cycle GAN
+    """
+    def __init__(
+        self,
+        conv_dim = 64,
+        n_res_blocks = 6
+        ):
+        """ Initialize Cycle GAN Generator
+            Arguments
+            ---------
+            conv_dim : int
+                Size of output channel for the first convolutional layer.
+            n_res_blocks : int
+                Number of residual blocks in the generator
+        """
+        super(CycleGenerator, self).__init__()
+
 
     def forward(
         self, 
