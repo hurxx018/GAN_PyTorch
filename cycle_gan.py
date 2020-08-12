@@ -33,12 +33,22 @@ def conv(
 
 
 class Discriminator(nn.Module):
+    """ Discriminator
 
+        Define a Discriminator for Cycle GAN.
+    """
     def __init__(
         self, 
         input_in_channels = 3, 
         conv_dim = 64
         ):
+        """ Initialize Discriminator.
+            Arguments:
+            input_in_inchannels : int
+                Number of channels for the input
+            conv_dim : int
+                Number of output channels for the first conv-layer.
+        """
         super(Discriminator, self).__init__()
 
         self.input_in_channels = input_in_channels
@@ -72,7 +82,10 @@ class Discriminator(nn.Module):
 
 
 class ResidualBlock(nn.Module):
+    """ ResidualBlock
 
+        Compute a skip connection.
+    """
 
     def __init__(
         self,
@@ -171,6 +184,8 @@ class CycleGenerator(nn.Module):
         return x
 
 
+
+# Helper Functions
 
 def get_data_loader(
     image_type,
