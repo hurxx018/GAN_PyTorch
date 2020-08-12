@@ -132,13 +132,43 @@ class CycleGenerator(nn.Module):
                 Number of residual blocks in the generator
         """
         super(CycleGenerator, self).__init__()
+        self.conv_dim = conv_dim
+        self.n_res_blocks = n_res_blocks
+
+        # Define the encoder part of the generator
+        self.encode = nn.Sequential(
+            conv(3, self.conv_dim, 4, 2, 1, batch_norm = True),
+            nn.ReLU(),
+            conv(self.conv_dim, self.conv_dim*2, 4, 2, 1, batch_norm = True),
+            nn.ReLU(),
+            conv(self.conv_dim*2, self.conv_dim*4, 4, 2, 1, batch_norm = True),
+            nn.ReLU()                        
+            )
+
+        # Define the resnet part of the generator
+        layers = [ResidualBlock(self.conv_dim*4) for _ in range(self.n_res_blocks)]
+        self.resnet = nn.Sequential(
+            *layers
+            )
+
+        # Define the decoder part of the generator
+        self.decoder = nn.Sequential(
+            deconv(self.conv_dim*4, self.conv_dim*2, 4, 2, 1, batch_norm = True),
+            nn.ReLU(),
+            deconv(self.conv_dim*2, self.conv_dim*1, 4, 2, 1, batch_norm = True),
+            nn.ReLU(),
+            deconv(self.conv_dim*1, 3, 4, 2, 1, batch_norm = False),
+            nn.Tanh()
+        )
 
 
     def forward(
         self, 
         x):
-
-        pass
+        x = self.encode(x)
+        x = self.resnet(x)
+        x = self.decoder(x)
+        return x
 
 
 
