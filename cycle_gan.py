@@ -95,6 +95,38 @@ class ResidualBlock(nn.Module):
 
         return y + x
 
+
+def deconv(
+    in_channels,
+    out_channels,
+    kernel_size,
+    stride,
+    padding,
+    batch_norm = True
+    ):
+    """ Create a transpose-convolutional layer with an optional batch normalization layer.
+    """
+    layers = []
+    deconv_layer = nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride, padding, bias=False)
+    layers.append(deconv_layer)
+
+    if batch_norm:
+        layers.append(nn.BatchNorm2d(out_channels))
+    return nn.Sequential(*layers)
+
+
+class Generator(nn.Module):
+    def __init__(self):
+        super(Generator, self).__init__()
+
+    def forward(
+        self, 
+        x):
+
+        pass
+
+
+
 def get_data_loader(
     image_type,
     image_dir,
