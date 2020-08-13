@@ -77,6 +77,7 @@ class Discriminator(nn.Module):
         x = self.relu(self.conv3(x))
         x = self.relu(self.conv4(x))
         x = self.relu(self.conv5(x))
+        x = x.view(-1, self.conv_dim*16*4*4)
         out = self.fc_last(x)
         return out
 
@@ -151,7 +152,7 @@ class CycleGenerator(nn.Module):
         self.n_res_blocks = n_res_blocks
 
         # Define the encoder part of the generator
-        self.encode = nn.Sequential(
+        self.encoder = nn.Sequential(
             conv(self.input_in_channels, self.conv_dim, 4, 2, 1, batch_norm = True),
             nn.ReLU(),
             conv(self.conv_dim, self.conv_dim*2, 4, 2, 1, batch_norm = True),
@@ -180,7 +181,7 @@ class CycleGenerator(nn.Module):
     def forward(
         self, 
         x):
-        x = self.encode(x)
+        x = self.encoder(x)
         x = self.resnet(x)
         x = self.decoder(x)
         return x
