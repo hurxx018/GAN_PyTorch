@@ -186,6 +186,62 @@ class CycleGenerator(nn.Module):
         return x
 
 
+# Losses for Cycle GAN
+def real_mse_loss(
+    D_out
+    ):
+    """ Calculate loss for a real image 
+         Arguments
+         ---------
+         D_out : a float
+            Output of Discriminator for a fake image
+
+         Returns
+         -------
+            loss = (D_out - 1) ** 2
+    """
+    return torch.mean((D_out - 1.)**2)
+
+
+def fake_mse_loss(
+    D_out
+    ):
+    """ Calculate loss for a fake image 
+        Arguments
+        ---------
+        D_out : a float
+            Output of Discriminator for a fake image
+
+        Returns
+        -------
+            loss = (D_out - 0) ** 2
+    """
+    return torch.mean(D_out**2)
+
+def cycle_consistency_loss(
+    real_im,
+    reconstructed_im,
+    lambda_weight
+    ):
+    """ Calculate cycle consistency loss
+        Arguments
+        ---------
+        real_im : array_like = image
+            Real input image for the generator
+        reconstructed_im : array_like = image
+            Image reconstructed throughout generators
+        lambda_weight : float
+            A weight-factor of cycle consistency loss
+
+        Returns
+        -------
+        cycle consistency loss
+    """
+    return lambda_weight*torch.mean(torch.abs(real_im - reconstructed_im))
+
+
+
+
 
 # Helper Functions
 
